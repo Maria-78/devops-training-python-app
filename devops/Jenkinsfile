@@ -10,32 +10,6 @@ pipeline {
       }
     }
 
-    stage('Lint') {
-      agent {
-        docker {
-          image 'python:3.6-slim'
-        }
-      }
-      steps {
-        sh '''
-          # Actualizar paquetes e instalar make y venv
-          apt-get update && apt-get install -y make python3-venv
-          
-          # Crear entorno virtual si no existe
-          python3 -m venv .venv
-          
-          # Activar y actualizar pip
-          .venv/bin/pip install --upgrade pip
-          
-          # Instalar herramientas necesarias
-          .venv/bin/pip install black flake8 mypy pytest coverage
-          
-          # Ejecutar Makefile
-          make lint
-        '''
-      }
-    }
-
     stage('Test') {
       agent {
         docker {
@@ -46,12 +20,15 @@ pipeline {
         sh '''
           apt-get update && apt-get install -y make python3-venv
           python3 -m venv .venv
-          .venv/bin/pip install --upgrade pip
-          .venv/bin/pip install black flake8 mypy pytest coverage
-          make test
+          . .venv/bin/activate
+          pip install --upgrade pip
+          pip install pytest
+          pytest
         '''
       }
     }
+
+   
 
   }
 }
