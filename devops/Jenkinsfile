@@ -1,11 +1,14 @@
-/*
-  Practica 2 - Jenkinsfile dummy (PUNTO DE PARTIDA)
-*/
-
 pipeline {
   agent any
 
   stages {
+
+    stage('Info') {
+      steps {
+        sh 'echo "Job: ${JOB_NAME}"'
+        sh 'echo "Build: ${BUILD_NUMBER}"'
+      }
+    }
 
     stage('Lint') {
       agent {
@@ -14,9 +17,22 @@ pipeline {
         }
       }
       steps {
-        sh 'apt-get update'
-        sh 'apt-get install -y make'
-        sh 'make lint'
+        sh '''
+          # Actualizar paquetes e instalar make y venv
+          apt-get update && apt-get install -y make python3-venv
+          
+          # Crear entorno virtual si no existe
+          python3 -m venv .venv
+          
+          # Activar y actualizar pip
+          .venv/bin/pip install --upgrade pip
+          
+          # Instalar herramientas necesarias
+          .venv/bin/pip install black flake8 mypy pytest coverage
+          
+          # Ejecutar Makefile
+          make lint
+        '''
       }
     }
 
@@ -27,16 +43,13 @@ pipeline {
         }
       }
       steps {
-        sh 'python --version'
-        sh 'pip install pytest'
-        sh 'pytest'
-      }
-    }
-
-    stage('Info') {
-      steps {
-        sh 'echo "Job: ${JOB_NAME}"'
-        sh 'echo "Build: ${BUILD_NUMBER}"'
+        sh '''
+          apt-get update && apt-get install -y make python3-venv
+          python3 -m venv .venv
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install black flake8 mypy pytest coverage
+          make test
+        '''
       }
     }
 
