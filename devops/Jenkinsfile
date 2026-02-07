@@ -24,6 +24,8 @@ pipeline {
           python3 -m venv .venv
           .venv/bin/pip install --upgrade pip
           .venv/bin/pip install black flake8 mypy
+          # Fix formatting before checking
+          make reformat
           make lint
         '''
       }
