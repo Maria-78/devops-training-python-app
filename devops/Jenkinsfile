@@ -1,3 +1,9 @@
+def runInDocker(String image, Closure body) {
+    docker.image(image).inside {
+        body()
+    }
+}
+
 pipeline {
   agent any
 
@@ -13,40 +19,34 @@ pipeline {
 
 
     stage('Lint') {
-      agent {
-        docker {
-          image 'python:3.6-slim'
-        }
-      }
       steps {
-        sh '''
-          apt-get update && apt-get install -y make python3-venv
-          python3 -m venv .venv
-          .venv/bin/pip install --upgrade pip
-          .venv/bin/pip install black flake8 mypy
-          # Fix formatting before checking
-          make reformat
-          make lint
-        '''
+        runInDocker('python:3.6-slim') {
+          sh '''
+            apt-get update && apt-get install -y make python3-venv
+            python3 -m venv .venv
+            .venv/bin/pip install --upgrade pip
+            .venv/bin/pip install black flake8 mypy
+            # Fix formatting before checking
+            make reformat
+            make lint
+          '''
+        }
       }
     }
 
     stage('Test') {
-      agent {
-        docker {
-          image 'python:3.6-slim'
-        }
-      }
       steps {
-        sh '''
-          apt-get update && apt-get install -y make python3-venv
-          python3 -m venv .venv
-          .venv/bin/pip install --upgrade pip
-          .venv/bin/pip install pytest coverage
-          # Fix formatting before checking
-          make reformat
-          make test
-        '''
+        runInDocker('python:3.6-slim') {
+          sh '''
+            apt-get update && apt-get install -y make python3-venv
+            python3 -m venv .venv
+            .venv/bin/pip install --upgrade pip
+            .venv/bin/pip install pytest coverage
+            # Fix formatting before checking
+            make reformat
+            make test
+          '''
+        }
       }
     }
 
