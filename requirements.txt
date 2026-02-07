@@ -1,6 +1,12 @@
+# Testing
 pytest
 coverage
-black[jupyter]
 
+# Linting & Formatting
+black[jupyter]
+flake8
+mypy
+
+# Application
 Flask
 psycopg2

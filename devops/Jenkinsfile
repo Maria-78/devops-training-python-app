@@ -30,10 +30,10 @@ pipeline {
       steps {
         runInDocker('python:3.6-slim') {
           sh '''
-            apt-get update && apt-get install -y make python3-venv
+            apt-get update && apt-get install -y make python3-venv gcc libpq-dev
             python3 -m venv .venv
             .venv/bin/pip install --upgrade pip
-            .venv/bin/pip install black flake8 mypy
+            .venv/bin/pip install -r requirements.txt
             # Fix formatting before checking
             make reformat
             make lint
@@ -46,10 +46,10 @@ pipeline {
       steps {
         runInDocker('python:3.6-slim') {
           sh '''
-            apt-get update && apt-get install -y make python3-venv
+            apt-get update && apt-get install -y make python3-venv gcc libpq-dev
             python3 -m venv .venv
             .venv/bin/pip install --upgrade pip
-            .venv/bin/pip install pytest coverage
+            .venv/bin/pip install -r requirements.txt
             # Fix formatting before checking
             make reformat
             make test
