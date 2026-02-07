@@ -16,7 +16,15 @@ pipeline {
       }
     }
 
-
+    stage('Build image') {
+        steps {
+            script {
+                def imageName = "my-python-app:${env.BUILD_NUMBER}"
+                echo "Building and tagging image: ${imageName}"
+                docker.build(imageName, "-f devops/Dockerfile .")
+            }
+        }
+    }
 
     stage('Lint') {
       steps {
