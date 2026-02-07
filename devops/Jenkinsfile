@@ -27,5 +27,6 @@ pipeline {
         sh 'echo "Stage dummy. En la Practica 2 ejecutaras aqui los tests unitarios."'
       }
     }
+
   }
 }
