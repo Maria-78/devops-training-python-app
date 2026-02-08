@@ -82,8 +82,26 @@ pipeline {
     stage('CD') {
         steps {
             sh 'docker compose up -d'
-            sh 'sleep 25'
-            sh 'curl --fail http://localhost:5001/'
+            // Usa un bucle de reintentos para dar tiempo a que los servicios arranquen.
+            script {
+                def attempts = 0
+                def maxAttempts = 12 // 12 intentos * 5 segundos = 1 minuto de espera máxima
+                def success = false
+                while(attempts < maxAttempts && !success) {
+                    try {
+                        sh 'curl --fail http://localhost:5001/'
+                        success = true
+                        echo 'Application is up and running!'
+                    } catch (Exception e) {
+                        echo "Attempt ${attempts + 1} of ${maxAttempts} failed. Retrying in 5 seconds..."
+                        sleep 5
+                        attempts++
+                    }
+                }
+                if (!success) {
+                    error 'Application did not start in time.'
+                }
+            }
         }
         post {
             // Este bloque se ejecuta siempre al final del stage, haya fallado o no.
