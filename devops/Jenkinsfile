@@ -79,27 +79,43 @@ pipeline {
 
 
 stage('CD') {
+    when {
+        anyOf {
+            branch 'develop'
+            branch 'main'
+        }
+    }
     steps {
-        // 1. Levanta los contenedores en segundo plano
-        sh 'docker compose up -d --build'
-        
-        // 2. Espera activa (Crucial para que la DB esté lista)
-        echo "Esperando a que la base de datos y Flask inicien..."
-        sh 'sleep 15'
-        
-        // 3. Verificación de salud (Healthcheck)
-        // Usamos el puerto 5001 porque es el que definiste en el host en tu docker-compose
         script {
+            // 1. Define el entorno basado en la rama
+            env.DEPLOY_ENV = (env.BRANCH_NAME == 'main') ? 'pro' : 'dev'
+            echo "Deploying to ${env.DEPLOY_ENV}"
+
+            // Define el nombre del proyecto para Docker Compose
+            def projectName = env.DEPLOY_ENV
+
             try {
-                // Verificación interna: 
-                // Usamos 'exec' para que el comando corra DENTRO del contenedor 'app'.
-                // Aquí usamos localhost:5000 porque estamos dentro del contenedor.
-                sh 'docker compose exec -T app curl -f http://localhost:5000/'
-                echo "¡Despliegue exitoso! La aplicación responde."
+                // 2. Levanta los contenedores usando un nombre de proyecto específico
+                sh "docker compose -p ${projectName} up -d --build"
+                
+                // 3. Espera activa
+                echo "Esperando a que la base de datos y Flask inicien..."
+                sh 'sleep 15'
+
+                // 4. Verificación de salud
+                // El nombre del contenedor ahora incluye el nombre del proyecto, ej: dev-app-1
+                // Para simplificar, usamos 'docker compose exec' que lo encuentra por nosotros.
+                sh "docker compose -p ${projectName} exec -T app curl -f http://localhost:5000/"
+                echo "¡Despliegue exitoso en ${env.DEPLOY_ENV}! La aplicación responde."
+
             } catch (Exception e) {
                 echo "Error: La aplicación no responde. Revisando logs..."
-                sh 'docker compose logs app'
-                error("Fallo en la prueba de conexión (Curl)")
+                sh "docker compose -p ${projectName} logs app"
+                error("Fallo en la prueba de conexión (Curl) para el entorno ${env.DEPLOY_ENV}")
+            } finally {
+                // 5. Limpieza de recursos pase lo que pase
+                echo "Limpiando el entorno ${env.DEPLOY_ENV}..."
+                sh "docker compose -p ${projectName} down --volumes"
             }
         }
     }
