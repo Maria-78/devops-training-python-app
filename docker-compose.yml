@@ -41,5 +41,6 @@ networks:
   scalian_training:
     driver: bridge
   
+  
 volumes:
   dbdata:
