@@ -5,7 +5,12 @@ WORKDIR /app
 COPY requirements.txt /app
 
 # Install system dependencies for psycopg2 and other build essentials
-RUN apt-get update && apt-get install -y gcc libpq-dev && rm -rf /var/lib/apt/lists/*
+# Añadimos 'curl' a la lista de paquetes instalados
+RUN apt-get update && apt-get install -y \
+    gcc \
+    libpq-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
 RUN pip install -r requirements.txt
