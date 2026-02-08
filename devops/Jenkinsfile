@@ -82,8 +82,9 @@ pipeline {
     stage('CD') {
         steps {
             sh 'docker compose up -d'
-            sh 'sleep 25'
-            sh 'curl --fail http://my-flask-app-dc:5000/'
+            sh 'sleep 10'
+            // Ejecuta curl desde dentro de otro contenedor en la misma red para resolver el nombre del host.
+            sh 'docker exec my-flask-app-db curl --fail http://my-flask-app-dc:5000/'
             sh 'docker compose logs'
         }
         post {
