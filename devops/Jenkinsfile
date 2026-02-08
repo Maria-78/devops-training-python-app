@@ -1,14 +1,23 @@
+/**
+ * Función reutilizable para ejecutar un bloque de código dentro de un contenedor Docker.
+ * @param image El nombre de la imagen Docker a utilizar (ej: 'python:3.6-slim').
+ * @param body El bloque de código (Closure) a ejecutar dentro del contenedor.
+ */
 def runInDocker(String image, Closure body) {
     docker.image(image).inside {
         body()
     }
 }
 
+// Define el pipeline de CI/CD completo.
 pipeline {
+  // Define el agente por defecto. 'any' significa que Jenkins puede usar cualquier agente disponible.
   agent any
 
+  // Contiene la secuencia de todos los stages que se ejecutarán.
   stages {
 
+    // Stage 1: Muestra información básica sobre la ejecución.
     stage('Info') {
       steps {
         sh 'echo "Job: ${JOB_NAME}"'
@@ -16,25 +25,33 @@ pipeline {
       }
     }
 
+    // Stage 2: Construye la imagen Docker de la aplicación.
     stage('Build image') {
         steps {
+            // El bloque 'script' permite usar código Groovy más complejo.
             script {
+                // Define un nombre único para la imagen usando el número de build.
                 def imageName = "my-python-app:${env.BUILD_NUMBER}"
                 echo "Building and tagging image: ${imageName}"
+                // Ejecuta 'docker build' para crear la imagen.
                 docker.build(imageName, "-f devops/Dockerfile .")
             }
         }
     }
 
+    // Stage 3: Verifica la calidad y el formato del código.
     stage('Lint') {
       steps {
+        // Usa la función reutilizable para ejecutar los pasos en un contenedor.
         runInDocker('python:3.6-slim') {
           sh '''
+            # Instala dependencias del sistema y de Python.
             apt-get update && apt-get install -y make python3-venv gcc libpq-dev
             python3 -m venv .venv
             .venv/bin/pip install --upgrade pip
             .venv/bin/pip install -r requirements.txt
-            # Fix formatting before checking
+            
+            # Arregla el formato y luego verifica que todo esté correcto.
             make reformat
             make lint
           '''
@@ -42,15 +59,17 @@ pipeline {
       }
     }
 
+    // Stage 4: Ejecuta las pruebas unitarias.
     stage('Test') {
       steps {
+        // Usa la misma función para mantener la consistencia.
         runInDocker('python:3.6-slim') {
           sh '''
+            # Instala dependencias del sistema y de Python.
             apt-get update && apt-get install -y make python3-venv gcc libpq-dev
             python3 -m venv .venv
             .venv/bin/pip install --upgrade pip
             .venv/bin/pip install -r requirements.txt
-            # Fix formatting before checking
             make reformat
             make test
           '''
@@ -58,7 +77,20 @@ pipeline {
       }
     }
 
-   
+    // Stage 5: Simula el despliegue y prueba de la aplicación.
+    stage('CD') {
+        steps {
+            sh 'docker compose up -d'
+            sh 'sleep 5'
+            sh 'curl --fail http://localhost:5001/'
+        }
+        post {
+            // Este bloque se ejecuta siempre al final del stage, haya fallado o no.
+            always {
+                sh 'docker compose down --volumes'
+            }
+        }
+    }
 
   }
 }
