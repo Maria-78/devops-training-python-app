@@ -91,7 +91,10 @@ stage('CD') {
         // Usamos el puerto 5001 porque es el que definiste en el host en tu docker-compose
         script {
             try {
-                sh 'curl -f http://localhost:5001/'
+                // Verificación interna: 
+                // Usamos 'exec' para que el comando corra DENTRO del contenedor 'app'.
+                // Aquí usamos localhost:5000 porque estamos dentro del contenedor.
+                sh 'docker compose exec -T app curl -f http://localhost:5000/'
                 echo "¡Despliegue exitoso! La aplicación responde."
             } catch (Exception e) {
                 echo "Error: La aplicación no responde. Revisando logs..."

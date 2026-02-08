@@ -19,6 +19,11 @@ services:
       - db
     ports:
       - "5001:5000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   
   db:
@@ -41,6 +46,6 @@ networks:
   scalian_training:
     driver: bridge
   
-  
+
 volumes:
   dbdata:
