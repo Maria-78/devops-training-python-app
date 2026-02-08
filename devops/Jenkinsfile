@@ -78,22 +78,35 @@ pipeline {
     }
 
 
-    // Stage 5: Simula el despliegue y prueba de la aplicación.
-    stage('CD') {
-        steps {
-            sh 'docker compose up -d'
-            sh 'sleep 10'
-            // Ejecuta curl desde dentro de otro contenedor en la misma red para resolver el nombre del host.
-            sh 'docker exec my-flask-app-db curl --fail http://my-flask-app-dc:5000/'
-            sh 'docker compose logs'
-        }
-        post {
-            // Este bloque se ejecuta siempre al final del stage, haya fallado o no.
-            always {
-                sh 'docker compose down --volumes'
+stage('CD') {
+    steps {
+        // 1. Levanta los contenedores en segundo plano
+        sh 'docker compose up -d'
+        
+        // 2. Espera activa (Crucial para que la DB esté lista)
+        echo "Esperando a que la base de datos y Flask inicien..."
+        sh 'sleep 15'
+        
+        // 3. Verificación de salud (Healthcheck)
+        // Usamos el puerto 5001 porque es el que definiste en el host en tu docker-compose
+        script {
+            try {
+                sh 'curl -f http://localhost:5001/'
+                echo "¡Despliegue exitoso! La aplicación responde."
+            } catch (Exception e) {
+                echo "Error: La aplicación no responde. Revisando logs..."
+                sh 'docker compose logs app'
+                error("Fallo en la prueba de conexión (Curl)")
             }
         }
     }
+    post {
+        // Limpieza de recursos pase lo que pase
+        always {
+            sh 'docker compose down --volumes'
+        }
+    }
+}
 
   }
 }

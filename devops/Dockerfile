@@ -12,5 +12,6 @@ RUN pip install -r requirements.txt
 
 COPY src /app/src
 WORKDIR /app/src
-
-CMD python app.py
+# Exponemos el puerto que Flask usa internamente
+EXPOSE 5000
+CMD ["python", "app.py"]
