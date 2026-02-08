@@ -82,28 +82,9 @@ pipeline {
     stage('CD') {
         steps {
             sh 'docker compose up -d'
-            // Usa un bucle de reintentos para dar tiempo a que los servicios arranquen.
-            script {
-                def attempts = 0
-                def maxAttempts = 5 // 12 intentos * 5 segundos = 1 minuto de espera máxima
-                def success = false
-                while(attempts < maxAttempts && !success) {
-                    try {
-                        sh 'curl --fail http://localhost:5001/'
-                        success = true
-                        echo 'Application is up and running!'
-                    } catch (Exception e) {
-                        echo "Attempt ${attempts + 1} of ${maxAttempts} failed. Dumping logs and retrying in 5 seconds..."
-                        // Imprime los logs para poder depurar por qué ha fallado.
-                        sh 'docker compose logs'
-                        sleep 10
-                        attempts++
-                    }
-                }
-                if (!success) {
-                    error 'Application did not start in time.'
-                }
-            }
+            sh 'sleep 25'
+            sh 'curl --fail http://my-flask-app-dc:5000/'
+            sh 'docker compose logs'
         }
         post {
             // Este bloque se ejecuta siempre al final del stage, haya fallado o no.
