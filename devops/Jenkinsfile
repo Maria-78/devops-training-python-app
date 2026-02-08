@@ -81,7 +81,7 @@ pipeline {
 stage('CD') {
     steps {
         // 1. Levanta los contenedores en segundo plano
-        sh 'docker compose up -d'
+        sh 'docker compose up -d --build'
         
         // 2. Espera activa (Crucial para que la DB esté lista)
         echo "Esperando a que la base de datos y Flask inicien..."
