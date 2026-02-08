@@ -85,7 +85,7 @@ pipeline {
             // Usa un bucle de reintentos para dar tiempo a que los servicios arranquen.
             script {
                 def attempts = 0
-                def maxAttempts = 12 // 12 intentos * 5 segundos = 1 minuto de espera máxima
+                def maxAttempts = 5 // 12 intentos * 5 segundos = 1 minuto de espera máxima
                 def success = false
                 while(attempts < maxAttempts && !success) {
                     try {
@@ -93,8 +93,10 @@ pipeline {
                         success = true
                         echo 'Application is up and running!'
                     } catch (Exception e) {
-                        echo "Attempt ${attempts + 1} of ${maxAttempts} failed. Retrying in 5 seconds..."
-                        sleep 5
+                        echo "Attempt ${attempts + 1} of ${maxAttempts} failed. Dumping logs and retrying in 5 seconds..."
+                        // Imprime los logs para poder depurar por qué ha fallado.
+                        sh 'docker compose logs'
+                        sleep 10
                         attempts++
                     }
                 }
