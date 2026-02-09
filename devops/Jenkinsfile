@@ -19,6 +19,13 @@ pipeline {
     booleanParam(name: 'RUN_CD', defaultValue: false, description: 'Ejecutar CD (solo develop/main)')
   }
 
+  // Define variables de entorno globales para el pipeline.
+  environment {
+    IMAGE_NAME = "my-python-app:${env.BUILD_NUMBER}"
+    // URL interna para la comunicación entre contenedores
+    APP_INTERNAL_URL = "http://localhost:5000/"
+  }
+
   // Contiene la secuencia de todos los stages que se ejecutarán.
   stages {
 
@@ -35,11 +42,9 @@ pipeline {
         steps {
             // El bloque 'script' permite usar código Groovy más complejo.
             script {
-                // Define un nombre único para la imagen usando el número de build.
-                def imageName = "my-python-app:${env.BUILD_NUMBER}"
-                echo "Building and tagging image: ${imageName}"
+                echo "Building and tagging image: ${env.IMAGE_NAME}"
                 // Ejecuta 'docker build' para crear la imagen.
-                docker.build(imageName, "-f devops/Dockerfile .")
+                docker.build(env.IMAGE_NAME, "-f devops/Dockerfile .")
             }
         }
     }
@@ -114,7 +119,7 @@ stage('CD') {
                 // 4. Verificación de salud
                 // El nombre del contenedor ahora incluye el nombre del proyecto, ej: dev-app-1
                 // Para simplificar, usamos 'docker compose exec' que lo encuentra por nosotros.
-                sh "docker compose -p ${projectName} exec -T app curl -f http://localhost:5000/"
+                sh "docker compose -p ${projectName} exec -T app curl -f ${env.APP_INTERNAL_URL}"
                 echo "¡Despliegue exitoso en ${env.DEPLOY_ENV}! La aplicación responde."
 
             } catch (Exception e) {
