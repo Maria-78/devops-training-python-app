@@ -133,13 +133,20 @@ stage('CD') {
             }
         }
     }
-    post {
-        // Limpieza de recursos pase lo que pase
-        always {
-            sh 'docker compose down --volumes'
-        }
-    }
 }
 
+  }
+  post {
+    // Limpieza de recursos pase lo que pase
+    always {
+      sh 'docker compose down --volumes'
+    }
+    // Notificaciones
+    success {
+      echo "¡Pipeline exitoso!"
+    }
+    failure {
+      echo "Error en el pipeline"
+    }
   }
 }
