@@ -14,6 +14,11 @@ pipeline {
   // Define el agente por defecto. 'any' significa que Jenkins puede usar cualquier agente disponible.
   agent any
 
+  // Define los parámetros que se pueden pasar a la ejecución del pipeline.
+  parameters {
+    booleanParam(name: 'RUN_CD', defaultValue: false, description: 'Ejecutar CD (solo develop/main)')
+  }
+
   // Contiene la secuencia de todos los stages que se ejecutarán.
   stages {
 
@@ -80,13 +85,17 @@ pipeline {
 
 stage('CD') {
     when {
-        anyOf {
-            branch 'develop'
-            branch 'main'
+        allOf {
+            anyOf {
+                branch 'develop'
+                branch 'main'
+            }
+            expression { return params.RUN_CD }
         }
     }
     steps {
         script {
+            echo "CD habilitado por parámetro RUN_CD=${params.RUN_CD}"
             // 1. Define el entorno basado en la rama
             env.DEPLOY_ENV = (env.BRANCH_NAME == 'main') ? 'pro' : 'dev'
             echo "Deploying to ${env.DEPLOY_ENV}"
